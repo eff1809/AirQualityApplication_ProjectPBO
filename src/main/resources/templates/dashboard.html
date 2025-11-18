@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Air Quality Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8f9fa; }
+        .card-aqi { transition: transform 0.2s; }
+        .card-aqi:hover { transform: scale(1.02); }
+        .aqi-good { background-color: #198754; color: white; }      /* Hijau */
+        .aqi-fair { background-color: #ffc107; color: black; }      /* Kuning */
+        .aqi-bad { background-color: #dc3545; color: white; }       /* Merah */
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#">☁️ AirQuality Monitor (SDG 3)</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6">
+            <form action="/" method="get" class="d-flex gap-2">
+                <input type="text" name="city" class="form-control" placeholder="Cari nama kota (contoh: Jakarta)..." th:value="${city}">
+                <button type="submit" class="btn btn-primary">Cari</button>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${isDanger}" class="alert alert-danger d-flex align-items-center shadow" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        <div>
+            <strong>PERINGATAN BAHAYA!</strong> Kualitas udara di <span th:text="${city}"></span> sedang sangat buruk. Harap gunakan masker N95 jika keluar ruangan!
+        </div>
+    </div>
+
+    <div class="row mb-4" th:if="${current != null}">
+        <div class="col-md-4">
+            <div class="card card-aqi h-100 shadow-sm" 
+                 th:classappend="${current.aqiIndex >= 4 ? 'aqi-bad' : (current.aqiIndex == 3 ? 'aqi-fair' : 'aqi-good')}">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <h3>Indeks AQI</h3>
+                    <h1 class="display-1 fw-bold" th:text="${current.aqiIndex}">0</h1>
+                    <h4 th:text="${current.status}">Status</h4>
+                    <p class="small mt-2">Diperbarui: <span th:text="${#temporals.format(current.timestamp, 'HH:mm')}"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white fw-bold">Detail Polutan</div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="p-3 border rounded bg-light">
+                                <h5 class="text-muted">PM 2.5</h5>
+                                <h3 th:text="${current.pm25} + ' µg/m³'">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 border rounded bg-light">
+                                <h5 class="text-muted">CO (Karbon)</h5>
+                                <h3 th:text="${current.co2} + ' µg/m³'">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-2">
+                        <strong>💡 Tips Hari Ini:</strong> <span id="dailyTip">Loading tips...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-white fw-bold">Riwayat Kualitas Udara (Terbaru)</div>
+        <div class="card-body">
+            <canvas id="historyChart" height="100"></canvas>
+        </div>
+    </div>
+    
+    <footer class="text-center text-muted mb-4">
+        <small>&copy; 2025 Project PBO Kelompok Kamu - Universitas Hasanuddin</small>
+    </footer>
+</div>
+
+<script th:inline="javascript">
+    /* --- Logic Tips Edukasi (Randomizer) --- */
+    const tips = [
+        "Gunakan transportasi umum untuk mengurangi emisi karbon.",
+        "Tanam pohon di halaman rumah untuk menyaring udara.",
+        "Hindari membakar sampah sembarangan.",
+        "Matikan lampu jika tidak digunakan untuk hemat energi.",
+        "Gunakan masker saat indeks AQI di atas 150.",
+        "Cek kualitas udara setiap pagi sebelum beraktivitas."
+    ];
+    document.getElementById("dailyTip").innerText = tips[Math.floor(Math.random() * tips.length)];
+
+    /* --- Logic Grafik Chart.js --- */
+    // Mengambil data dari Java (Thymeleaf)
+    var historyData = [[${history}]]; // Ini syntax 'ajaib' Thymeleaf ambil data List Java
+    
+    // Kita balik urutannya biar grafik jalan dari kiri (lama) ke kanan (baru)
+    historyData.reverse();
+
+    const labels = historyData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+    const dataPoints = historyData.map(d => d.pm25);
+
+    new Chart(document.getElementById('historyChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tingkat PM 2.5 (Debu Halus)',
+                data: dataPoints,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+</script>
+
+</body>
+</html>
