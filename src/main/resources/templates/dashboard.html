@@ -4,130 +4,303 @@
     <title>Air Quality Monitoring</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .card-aqi { transition: transform 0.2s; }
-        .card-aqi:hover { transform: scale(1.02); }
-        .aqi-good { background-color: #198754; color: white; }      /* Hijau */
-        .aqi-fair { background-color: #ffc107; color: black; }      /* Kuning */
-        .aqi-bad { background-color: #dc3545; color: white; }       /* Merah */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #ece9e6, #ffffff); /* Soft gradient background */
+            color: #333;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+        }
+        .search-container {
+            background-color: #f0f2f5;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .card-custom {
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden; /* For gradient background */
+        }
+        .card-custom:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .aqi-card {
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, #28a745, #218838); /* Default Good */
+        }
+        .aqi-card.aqi-good { background: linear-gradient(135deg, #28a745, #218838); } /* Hijau */
+        .aqi-card.aqi-fair { background: linear-gradient(135deg, #ffc107, #e0a800); color: black; } /* Kuning */
+        .aqi-card.aqi-moderate { background: linear-gradient(135deg, #fd7e14, #e66b00); } /* Oranye */
+        .aqi-card.aqi-poor { background: linear-gradient(135deg, #dc3545, #c82333); } /* Merah */
+        .aqi-card.aqi-very-poor { background: linear-gradient(135deg, #6f42c1, #563d7c); } /* Ungu Gelap */
+
+        .aqi-card h1 {
+            font-size: 5rem; /* Ukuran angka AQI */
+            font-weight: 700;
+            line-height: 1;
+        }
+        .aqi-card h4 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .detail-item {
+            background-color: #f0f2f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .detail-item i {
+            font-size: 2.2rem;
+            margin-right: 15px;
+            color: #007bff;
+        }
+        .detail-item h5 {
+            margin-bottom: 5px;
+            color: #6c757d;
+        }
+        .detail-item h3 {
+            font-weight: 600;
+            color: #343a40;
+        }
+        .alert-danger-custom {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .tips-card {
+            background-color: #e6f7ff; /* Soft blue for tips */
+            color: #0056b3;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+        }
+        .tips-card i {
+            font-size: 1.8rem;
+            margin-right: 15px;
+        }
+        .chart-card {
+            padding: 25px;
+        }
+        footer {
+            margin-top: 50px;
+            padding-bottom: 20px;
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark bg-primary mb-4">
+<nav class="navbar navbar-dark bg-primary mb-5 shadow-sm">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="#">☁️ AirQuality Monitor (SDG 3)</a>
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-cloud-haze2-fill me-2"></i> AirQuality Monitor <span class="badge bg-light text-primary ms-2">SDG 3</span>
+        </a>
     </div>
 </nav>
 
 <div class="container">
-    <div class="row justify-content-center mb-4">
-        <div class="col-md-6">
-            <form action="/" method="get" class="d-flex gap-2">
-                <input type="text" name="city" class="form-control" placeholder="Cari nama kota (contoh: Jakarta)..." th:value="${city}">
-                <button type="submit" class="btn btn-primary">Cari</button>
-            </form>
-        </div>
-    </div>
-
-    <div th:if="${isDanger}" class="alert alert-danger d-flex align-items-center shadow" role="alert">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
-            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-        </svg>
-        <div>
-            <strong>PERINGATAN BAHAYA!</strong> Kualitas udara di <span th:text="${city}"></span> sedang sangat buruk. Harap gunakan masker N95 jika keluar ruangan!
-        </div>
-    </div>
-
-    <div class="row mb-4" th:if="${current != null}">
-        <div class="col-md-4">
-            <div class="card card-aqi h-100 shadow-sm" 
-                 th:classappend="${current.aqiIndex >= 4 ? 'aqi-bad' : (current.aqiIndex == 3 ? 'aqi-fair' : 'aqi-good')}">
-                <div class="card-body text-center d-flex flex-column justify-content-center">
-                    <h3>Indeks AQI</h3>
-                    <h1 class="display-1 fw-bold" th:text="${current.aqiIndex}">0</h1>
-                    <h4 th:text="${current.status}">Status</h4>
-                    <p class="small mt-2">Diperbarui: <span th:text="${#temporals.format(current.timestamp, 'HH:mm')}"></span></p>
-                </div>
-            </div>
-        </div>
-
+    <div class="row justify-content-center mb-5">
         <div class="col-md-8">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-white fw-bold">Detail Polutan</div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6 mb-3">
-                            <div class="p-3 border rounded bg-light">
-                                <h5 class="text-muted">PM 2.5</h5>
-                                <h3 th:text="${current.pm25} + ' µg/m³'">0</h3>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="p-3 border rounded bg-light">
-                                <h5 class="text-muted">CO (Karbon)</h5>
-                                <h3 th:text="${current.co2} + ' µg/m³'">0</h3>
+            <div class="search-container">
+                <form action="/" method="get" class="d-flex gap-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+                        <input type="text" name="city" class="form-control form-control-lg" placeholder="Cari nama kota (contoh: Jakarta, Makassar)..." th:value="${city}">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-search me-2"></i>Cari</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${isDanger}" class="alert-danger-custom d-flex align-items-center mb-5">
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-3" style="font-size: 2rem;"></i>
+        <div>
+            <h4 class="mb-1 text-white">PERINGATAN BAHAYA!</h4>
+            <p class="mb-0">Kualitas udara di <strong th:text="${city}"></strong> sedang <span class="fw-bold">SANGAT BURUK</span>. Harap gunakan masker N95 dan hindari aktivitas di luar ruangan!</p>
+        </div>
+    </div>
+
+    <div class="row mb-5" th:if="${current != null}">
+        <div class="col-md-5">
+            <div class="card-custom aqi-card h-100"
+                 th:classappend="${current.aqiIndex == 1 ? 'aqi-good' : (current.aqiIndex == 2 ? 'aqi-good' : (current.aqiIndex == 3 ? 'aqi-fair' : (current.aqiIndex == 4 ? 'aqi-moderate' : 'aqi-very-poor')))}">
+                <div class="d-flex flex-column justify-content-center align-items-center h-100">
+                    <p class="display-6 mb-2 fw-bold text-light" style="font-size: 1.8rem;">Indeks Kualitas Udara</p>
+                    <h1 class="text-light" th:text="${current.aqiIndex}">1</h1>
+                    <h4 class="text-light" th:text="${current.status}">Baik</h4>
+                    <p class="small mt-3 text-light-50">Diperbarui: <span th:text="${#temporals.format(current.timestamp, 'HH:mm dd MMM yyyy')}"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card-custom h-100 p-4">
+                <h4 class="mb-4 fw-bold text-primary">Detail Polutan</h4>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="detail-item">
+                            <i class="bi bi-wind"></i>
+                            <div>
+                                <h5>PM 2.5</h5>
+                                <h3><span th:text="${current.pm25}">0</span> µg/m³</h3>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="alert alert-info mt-2">
-                        <strong>💡 Tips Hari Ini:</strong> <span id="dailyTip">Loading tips...</span>
+                    <div class="col-lg-6">
+                        <div class="detail-item">
+                            <i class="bi bi-cloud-fill"></i>
+                            <div>
+                                <h5>CO (Karbon Monoksida)</h5>
+                                <h3><span th:text="${current.co2}">0</span> µg/m³</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tips-card mt-3">
+                    <i class="bi bi-lightbulb-fill"></i>
+                    <div>
+                        <h5 class="mb-1">Tips Edukasi Hari Ini</h5>
+                        <p class="mb-0" id="dailyTip">Loading tips...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm mb-5">
-        <div class="card-header bg-white fw-bold">Riwayat Kualitas Udara (Terbaru)</div>
-        <div class="card-body">
-            <canvas id="historyChart" height="100"></canvas>
-        </div>
+    <div class="card-custom chart-card mb-5">
+        <h4 class="mb-4 fw-bold text-primary"><i class="bi bi-graph-up me-2"></i>Riwayat Kualitas Udara (<span th:text="${city}"></span>)</h4>
+        <canvas id="historyChart" height="90"></canvas>
     </div>
     
-    <footer class="text-center text-muted mb-4">
-        <small>&copy; 2025 Project PBO Kelompok Kamu - Universitas Hasanuddin</small>
+    <footer class="text-center text-muted">
+        <small>&copy; 2025 AirQuality Monitor - Kelompok Tugas Akhir PBO Universitas Hasanuddin</small>
     </footer>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     /* --- Logic Tips Edukasi (Randomizer) --- */
     const tips = [
         "Gunakan transportasi umum untuk mengurangi emisi karbon.",
-        "Tanam pohon di halaman rumah untuk menyaring udara.",
-        "Hindari membakar sampah sembarangan.",
-        "Matikan lampu jika tidak digunakan untuk hemat energi.",
-        "Gunakan masker saat indeks AQI di atas 150.",
-        "Cek kualitas udara setiap pagi sebelum beraktivitas."
+        "Tanam pohon di halaman rumah untuk menyaring udara di sekitar.",
+        "Hindari membakar sampah sembarangan karena dapat memperburuk polusi.",
+        "Matikan lampu dan cabut charger jika tidak digunakan untuk hemat energi.",
+        "Gunakan masker N95 saat indeks AQI di atas 150 (Tidak Sehat).",
+        "Cek kualitas udara setiap pagi sebelum memulai aktivitas di luar ruangan."
     ];
     document.getElementById("dailyTip").innerText = tips[Math.floor(Math.random() * tips.length)];
 
     /* --- Logic Grafik Chart.js --- */
-    // Mengambil data dari Java (Thymeleaf)
-    var historyData = [[${history}]]; // Ini syntax 'ajaib' Thymeleaf ambil data List Java
-    
-    // Kita balik urutannya biar grafik jalan dari kiri (lama) ke kanan (baru)
-    historyData.reverse();
+    var historyData = [[${history}]];
+    if (historyData && historyData.length > 0) {
+        // Karena data dari API bisa cepat berubah, kita sesuaikan status AQI OpenWeatherMap ke skala umum
+        const mapAqiStatus = (aqiIndex) => {
+            if (aqiIndex <= 2) return "Baik";
+            if (aqiIndex == 3) return "Sedang";
+            if (aqiIndex == 4) return "Tidak Sehat";
+            return "Sangat Buruk"; // AQI 5
+        };
 
-    const labels = historyData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-    const dataPoints = historyData.map(d => d.pm25);
+        const labels = historyData.map(d => new Date(d.timestamp).toLocaleString());
+        const pm25DataPoints = historyData.map(d => d.pm25);
+        const aqiDataPoints = historyData.map(d => d.aqiIndex);
 
-    new Chart(document.getElementById('historyChart'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Tingkat PM 2.5 (Debu Halus)',
-                data: dataPoints,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.3,
-                fill: true
-            }]
-        },
-        options: { scales: { y: { beginAtZero: true } } }
-    });
+        new Chart(document.getElementById('historyChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tingkat PM 2.5 (µg/m³)',
+                    data: pm25DataPoints,
+                    borderColor: '#007bff', // Blue
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y-pm25'
+                },
+                {
+                    label: 'Indeks AQI (1-5)',
+                    data: aqiDataPoints,
+                    borderColor: '#28a745', // Green
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y-aqi'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.label.includes("AQI")) {
+                                    label += mapAqiStatus(context.raw) + ` (${context.raw})`;
+                                } else {
+                                    label += context.raw + ' µg/m³';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    'y-pm25': {
+                        type: 'linear',
+                        position: 'left',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'PM 2.5 (µg/m³)'
+                        }
+                    },
+                    'y-aqi': {
+                        type: 'linear',
+                        position: 'right',
+                        beginAtZero: true,
+                        max: 5, // AQI max 5
+                        grid: {
+                            drawOnChartArea: false // Hanya draw grid untuk y-pm25
+                        },
+                        title: {
+                            display: true,
+                            text: 'Indeks AQI (1-5)'
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Jika tidak ada data history
+        document.getElementById('historyChart').getContext('2d').font = '20px Poppins';
+        document.getElementById('historyChart').getContext('2d').fillText('Tidak ada riwayat data untuk kota ini.', 50, 50);
+    }
 </script>
 
 </body>
