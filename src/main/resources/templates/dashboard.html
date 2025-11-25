@@ -98,7 +98,7 @@
     <div class="row justify-content-center mb-5">
         <div class="col-lg-7 text-center">
             <h2 class="fw-bold mb-2 text-glow">Monitoring Udara Real-Time</h2>
-            <p class="text-sub mb-4">Analisis lingkungan berbasis AI untuk kesehatan jangka panjang.</p>
+            <p class="text-sub mb-4">Data real-time akurat untuk menjaga kesehatan keluarga anda</p>
             <form action="/" method="get" style="position: relative;">
                 <i class="bi bi-search search-icon"></i>
                 <input type="text" name="city" class="search-input shadow-lg" placeholder="Cari lokasi (contoh: Jakarta, Delhi)..." th:value="${city}">
@@ -118,7 +118,7 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-5" th:if="${current != null}">
+    <div class="row g-4 mb-5 " th:if="${current != null}">
         <div class="col-lg-4">
             <div class="glass-card h-100 aqi-main"
                  th:classappend="${current.aqiIndex == 1 ? 'bg-good' : (current.aqiIndex == 2 ? 'bg-good' : (current.aqiIndex == 3 ? 'bg-fair' : (current.aqiIndex == 4 ? 'bg-poor' : 'bg-hazardous')))}">
@@ -134,6 +134,11 @@
                 <div class="d-inline-block bg-white bg-opacity-10 px-4 py-2 rounded-pill backdrop-blur mt-2">
                     <i class="bi bi-geo-alt-fill me-2"></i> <span th:text="${city}">City</span>
                 </div>
+
+                <div class="mt-6 text-center opacity-75">
+                    <small>Update: <span th:text="${#temporals.format(current.timestamp, 'HH:mm')}"></span></small>
+                </div>
+
             </div>
         </div>
 
@@ -152,6 +157,9 @@
                         <div class="progress mt-3" style="height: 6px;">
                             <div class="progress-bar bg-primary" style="width: 25%"></div>
                         </div>
+                        <div>
+                            <small class="text-sub">Debu halus yang dapat masuk ke paru-paru</small>
+                        </div>
                     </div>
                 </div>
 
@@ -168,6 +176,9 @@
                         <div class="progress mt-3" style="height: 6px;">
                             <div class="progress-bar bg-warning" style="width: 45%"></div>
                         </div>
+                        <div>
+                            <small class="text-sub"> Gas hasil pembakaran kendaraan bermotor</small>
+                        </div>
                     </div>
                 </div>
 
@@ -177,7 +188,7 @@
                             <i class="bi bi-stars fs-5"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold text-primary mb-1">AI Insight</h5>
+                            <h5 class="fw-bold text-primary mb-1">Tips Hari Ini</h5>
                             <p class="mb-0 text-sub" id="dailyTip">Menganalisis kondisi lingkungan...</p>
                         </div>
                     </div>
@@ -355,5 +366,54 @@
     }
 </script>
 
+<script th:inline="javascript">
+    /* --- LOGIC NOTIFIKASI & MONITORING OTOMATIS --- */
+
+    var isDanger = [[${isDanger}]];
+    var city = [[${city}]];
+    var aqi = [[${current != null ? current.aqiIndex : 0}]];
+
+    // 1. Minta Izin Notifikasi
+    function requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    }
+
+    // 2. Tampilkan Notifikasi (Bisa muncul di atas tab lain)
+    function showDangerNotification() {
+        if (Notification.permission === "granted" && isDanger) {
+            const notification = new Notification("⚠️ PERINGATAN BAHAYA UDARA!", {
+                body: `Kualitas udara di ${city} memburuk (AQI: ${aqi}). Segera pakai masker!`,
+                icon: "https://cdn-icons-png.flaticon.com/512/564/564619.png",
+                requireInteraction: true // Notif tidak hilang sendiri 
+            });
+            
+            // Kalau notif diklik, kembali ke tab aplikasi
+            notification.onclick = function() {
+                window.focus();
+                this.close();
+            };
+        }
+    }
+
+    // 3. LOGIC LIVE MONITORING (Auto-Refresh)
+    // Cek apakah ada kota yang sedang dicari/dipantau
+    if (city && city !== 'null' && city !== '') {
+        // Set timer: Refresh halaman setiap 60 detik (60000 ms)
+        // Ubah angka ini jadi 10000 (10 detik) KHUSUS SAAT DEMO
+        setTimeout(function() {
+            console.log("Melakukan pengecekan udara otomatis...");
+            window.location.reload(); 
+        }, 60000); // <-- akan kita ganti 60000 jadi 10000 saat demo depan dosen (biar cepat kelihatan)
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        requestNotificationPermission();
+        
+        // Beri jeda 2 detik sebelum notifikasi muncul agar terlihat natural
+        setTimeout(showDangerNotification, 2000);   
+    });
+</script>
 </body>
 </html>
