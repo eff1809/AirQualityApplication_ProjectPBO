@@ -123,9 +123,21 @@
             <div class="glass-card h-100 aqi-main"
                  th:classappend="${current.aqiIndex == 1 ? 'bg-good' : (current.aqiIndex == 2 ? 'bg-good' : (current.aqiIndex == 3 ? 'bg-fair' : (current.aqiIndex == 4 ? 'bg-poor' : 'bg-hazardous')))}">
                 
-                <div class="d-flex justify-content-between w-100 mb-3">
-                    <span class="badge bg-black bg-opacity-25 rounded-pill backdrop-blur">Live Data</span>
-                    <i class="bi bi-broadcast"></i>
+                <div class="d-flex justify-content-between w-100 mb-3 align-items-start">
+                    <span class="badge bg-black bg-opacity-25 rounded-pill backdrop-blur d-flex align-items-center gap-2">
+                        <i class="bi bi-broadcast animate-pulse"></i> Live
+                    </span>
+
+                    <div class="text-end bg-black bg-opacity-20 px-3 py-1 rounded-4 backdrop-blur d-flex align-items-center gap-2">
+                        <img th:src="'https://openweathermap.org/img/wn/' + ${current.weatherIcon} + '.png'" 
+                             alt="Weather" style="width: 30px; height: 30px;">
+                        
+                        <div>
+                            <div class="fw-bold lh-1" style="font-size: 1.1rem;">
+                                <span th:text="${#numbers.formatDecimal(current.temperature, 1, 0)}">28</span>°C
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="display-1 fw-bold mb-0" th:text="${current.aqiIndex}">1</div>
@@ -134,11 +146,6 @@
                 <div class="d-inline-block bg-white bg-opacity-10 px-4 py-2 rounded-pill backdrop-blur mt-2">
                     <i class="bi bi-geo-alt-fill me-2"></i> <span th:text="${city}">City</span>
                 </div>
-
-                <div class="mt-6 text-center opacity-75">
-                    <small>Update: <span th:text="${#temporals.format(current.timestamp, 'HH:mm')}"></span></small>
-                </div>
-
             </div>
         </div>
 
