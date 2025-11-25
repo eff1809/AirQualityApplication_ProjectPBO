@@ -29,13 +29,10 @@ public class AirQualityServiceImpl implements AirQualityService {
 
     @Override
     public AirQuality getAirQualityData(String cityName) {
-        // 1. Cari koordinat kota dulu (Geocoding sederhana)
-        // Karena API Air Pollution butuh Lat/Lon, bukan nama kota.
-        // Kita pakai endpoint Geo OpenWeatherMap.
+        // 1. Cari Koordinat (Geo API) - KODE LAMA (TETAP)
         String geoUrl = "http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&limit=1&appid=" + apiKey;
         
         try {
-            // Panggil API Geo
             JsonNode geoResponse = restTemplate.getForObject(geoUrl, JsonNode.class);
             if (geoResponse == null || geoResponse.isEmpty()) {
                 throw new RuntimeException("Kota tidak ditemukan: " + cityName);
@@ -44,24 +41,40 @@ public class AirQualityServiceImpl implements AirQualityService {
             double lat = geoResponse.get(0).get("lat").asDouble();
             double lon = geoResponse.get(0).get("lon").asDouble();
 
-            // 2. Panggil API Kualitas Udara pakai Lat/Lon tadi
-            String url = apiUrl + "?lat=" + lat + "&lon=" + lon + "&appid=" + apiKey;
-            JsonNode response = restTemplate.getForObject(url, JsonNode.class);
-
-            // 3. Ambil data penting dari JSON response
-            JsonNode listData = response.get("list").get(0);
+            // 2. Ambil Data Polusi (Air Pollution API) - KODE LAMA (TETAP)
+            String pollutionUrl = apiUrl + "?lat=" + lat + "&lon=" + lon + "&appid=" + apiKey;
+            JsonNode pollutionResponse = restTemplate.getForObject(pollutionUrl, JsonNode.class);
+            
+            JsonNode listData = pollutionResponse.get("list").get(0);
             JsonNode components = listData.get("components");
             JsonNode main = listData.get("main");
 
             AirQuality airQuality = new AirQuality();
             airQuality.setCityName(cityName);
-            airQuality.setAqiIndex(main.get("aqi").asInt()); // 1 = Bagus, 5 = Sangat Buruk
+            airQuality.setAqiIndex(main.get("aqi").asInt());
             airQuality.setPm25(components.get("pm2_5").asDouble());
-            airQuality.setCo2(components.get("co").asDouble()); // CO (Karbon Monoksida)
+            airQuality.setCo2(components.get("co").asDouble());
             airQuality.setTimestamp(LocalDateTime.now());
 
-            // 4. Tentukan Status (Logic sederhana)
-            // Skala AQI OpenWeather: 1 (Good), 2 (Fair), 3 (Moderate), 4 (Poor), 5 (Very Poor)
+            // ---------------------------------------------------------
+            // 3. FITUR BARU: Ambil Data Cuaca & Suhu (Weather API)
+            // Tambahkan parameter '&units=metric' agar otomatis jadi Celcius
+            // ---------------------------------------------------------
+            String weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + lat + "&lon=" + lon + "&units=metric&appid=" + apiKey;
+            JsonNode weatherResponse = restTemplate.getForObject(weatherUrl, JsonNode.class);
+
+            if (weatherResponse != null) {
+                // Ambil suhu
+                double temp = weatherResponse.get("main").get("temp").asDouble();
+                airQuality.setTemperature(temp);
+
+                // Ambil icon cuaca (misal: "04d" = berawan)
+                String iconCode = weatherResponse.get("weather").get(0).get("icon").asText();
+                airQuality.setWeatherIcon(iconCode);
+            }
+            // ---------------------------------------------------------
+
+            // 4. Logic Status AQI - KODE LAMA (TETAP)
             int aqi = airQuality.getAqiIndex();
             if (aqi == 1) airQuality.setStatus("Baik");
             else if (aqi == 2) airQuality.setStatus("Cukup");
@@ -69,12 +82,10 @@ public class AirQualityServiceImpl implements AirQualityService {
             else if (aqi == 4) airQuality.setStatus("Tidak Sehat");
             else airQuality.setStatus("Berbahaya");
 
-            // 5. Simpan ke Database (Otomatis untuk History)
             return repository.save(airQuality);
 
         } catch (Exception e) {
             e.printStackTrace();
-            // Jika error, kembalikan object kosong atau null biar gak crash
             return null;
         }
     }
