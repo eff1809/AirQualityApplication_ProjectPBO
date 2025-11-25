@@ -25,4 +25,7 @@ public class AirQuality {
     private String status;    // ex: "Sehat", "Tidak Sehat", "Berbahaya"
     
     private LocalDateTime timestamp; // Waktu data diambil
+
+    private Double temperature;  // Menampung suhu (Celcius)
+    private String weatherIcon;  // Kode icon cuaca (misal: '10d' untuk hujan)
 }
