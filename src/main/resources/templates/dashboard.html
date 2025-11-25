@@ -203,7 +203,9 @@
                 <h4 class="fw-bold mb-0 text-main">Riwayat & Tren</h4>
                 <p class="text-sub mb-0">Analisis pergerakan polutan dalam 24 jam terakhir</p>
             </div>
-            <button class="btn btn-outline-light btn-sm rounded-pill px-3">Export Data</button>
+            <a th:href="@{/export(city=${city})}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                <i class="bi bi-download me-2"></i>Download CSV
+            </a>
         </div>
         <div class="chart-container">
             <canvas id="historyChart"></canvas>
@@ -367,7 +369,7 @@
 </script>
 
 <script th:inline="javascript">
-    /* --- LOGIC NOTIFIKASI & MONITORING OTOMATIS --- */
+    /* --- LOGIC NOTIFIKASI & MONITORING OTOMATIS   --- */
 
     var isDanger = [[${isDanger}]];
     var city = [[${city}]];
