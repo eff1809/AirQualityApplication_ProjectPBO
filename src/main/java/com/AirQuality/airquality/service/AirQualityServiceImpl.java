@@ -74,13 +74,9 @@ public class AirQualityServiceImpl implements AirQualityService {
             }
             // ---------------------------------------------------------
 
-            // 4. Logic Status AQI - KODE LAMA (TETAP)
-            int aqi = airQuality.getAqiIndex();
-            if (aqi == 1) airQuality.setStatus("Baik");
-            else if (aqi == 2) airQuality.setStatus("Cukup");
-            else if (aqi == 3) airQuality.setStatus("Sedang");
-            else if (aqi == 4) airQuality.setStatus("Tidak Sehat");
-            else airQuality.setStatus("Berbahaya");
+            // 4. Logic Status AQI - SUDAH DIPINDAH KE MODEL (OOP / Refactoring)
+            // Kita panggil method logika yang ada di dalam class AirQuality
+            airQuality.calculateStatus();
 
             return repository.save(airQuality);
 
