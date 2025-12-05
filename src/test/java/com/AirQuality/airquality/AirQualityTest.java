@@ -4,7 +4,7 @@ import com.AirQuality.airquality.model.AirQuality;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-// Menerapkan materi Slide 12: Membuat Test Class
+//Membuat Test Class (isolated unit test)
 class AirQualityTest {
 
     // Test Case 1: Batas Bawah (Baik)
@@ -14,7 +14,7 @@ class AirQualityTest {
         aq.setAqiIndex(1);
         aq.calculateStatus(); // Jalankan logika
         
-        // Sesuai materi Slide 13 & 19: assertEquals(message, expected, actual)
+        // Sesuai materi Slide 13 & 19: assertEquals(expected, actual, message)
         assertEquals("Baik", aq.getStatus(), "AQI 1 harusnya status Baik");
     }
 

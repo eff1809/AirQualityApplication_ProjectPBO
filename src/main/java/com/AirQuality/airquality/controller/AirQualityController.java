@@ -53,7 +53,7 @@ public class AirQualityController {
 
         // 5. Kembalikan nama file HTML yang akan ditampilkan
         // 5. BUKA HALAMAN "dashboard.html"
-        return "dashboard"; 
+        return "dashboard";
     }
 
 
