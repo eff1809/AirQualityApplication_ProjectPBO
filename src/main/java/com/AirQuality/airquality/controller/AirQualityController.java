@@ -23,31 +23,36 @@ import java.util.List;
 public class AirQualityController {
 
     @Autowired
-    private AirQualityService service;
+    private AirQualityService service; // Controller butuh bantuan Service (Koki)
 
     // Halaman Utama (Dashboard)
     // Method ini akan dipanggil saat user membuka browser (localhost:8080)
-    @GetMapping("/")
+    @GetMapping("/")// Jika user buka alamat website utama...
     public String home(Model model, @RequestParam(value = "city", required = false, defaultValue = "Makassar") String city) {
         // "Makassar" kita set sebagai default karena ini project Unhas :)
         
         // 1. Panggil Service untuk ambil Data Real-time
+        // 1. SURUH SERVICE KERJA
+        // "Hei Service, carikan data buat kota ini dong"
         AirQuality currentData = service.getAirQualityData(city);
         
         // 2. Panggil Service untuk ambil History pencarian
+        // "Hei Service, ambilkan juga riwayat data yang lama"
         List<AirQuality> historyData = service.getHistory(city);
 
         // 3. Masukkan data ke dalam "amplop" (Model) untuk dikirim ke HTML
+        // 3. SIAPKAN DATA BUAT DIBAWA KE HTML (Model = Nampan Saji)
         model.addAttribute("current", currentData);
         model.addAttribute("history", historyData);
         model.addAttribute("city", city);
         
         // 4. Logic Notifikasi Sederhana (Fitur 3)
-        // Jika AQI >= 4 (Buruk/Berbahaya), kirim sinyal bahaya ke frontend
+        // Jika AQI >= 4 (Buruk/Berbahaya), kirim sinyal bahaya ke frontend/html
         boolean isDanger = currentData != null && currentData.getAqiIndex() >= 4;
         model.addAttribute("isDanger", isDanger);
 
         // 5. Kembalikan nama file HTML yang akan ditampilkan
+        // 5. BUKA HALAMAN "dashboard.html"
         return "dashboard"; 
     }
 
@@ -64,7 +69,7 @@ public class AirQualityController {
         String headerValue = "attachment; filename=Laporan_" + city + "_" + timestamp + ".csv";
         response.setHeader(headerKey, headerValue);
 
-        // 2. Ambil data dari Service
+        // 2. Ambil data dari Service / panggil service buat ambil data
         List<AirQuality> historyData = service.getHistory(city);
 
         // 3. Gunakan Super-CSV untuk menulis data

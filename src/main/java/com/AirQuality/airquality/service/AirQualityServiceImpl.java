@@ -24,7 +24,7 @@ public class AirQualityServiceImpl implements AirQualityService {
     @Value("${weather.api.url}")
     private String apiUrl;
 
-    // RestTemplate adalah alat Spring buat request ke internet
+    // RestTemplate adalah alat Spring buat request ke internet (seperti Browser tapi versi kode)
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
