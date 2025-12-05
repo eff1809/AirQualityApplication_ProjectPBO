@@ -24,31 +24,35 @@ public class AirQualityServiceImpl implements AirQualityService {
     @Value("${weather.api.url}")
     private String apiUrl;
 
-    // RestTemplate adalah alat Spring buat request ke internet (seperti Browser tapi versi kode)
+    // RestTemplate adalah alat Spring buat request ke internet
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
     public AirQuality getAirQualityData(String cityName) {
         // 1. Cari Koordinat (Geo API) - KODE LAMA (TETAP)
+        // Kita butuh Lat/Lon karena API Polusi tidak terima nama kota, maunya angka koordinat.
         String geoUrl = "http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&limit=1&appid=" + apiKey;
         
         try {
-            JsonNode geoResponse = restTemplate.getForObject(geoUrl, JsonNode.class);
+            JsonNode geoResponse = restTemplate.getForObject(geoUrl, JsonNode.class); // Kirim request!
             if (geoResponse == null || geoResponse.isEmpty()) {
                 throw new RuntimeException("Kota tidak ditemukan: " + cityName);
             }
             
+            // Ambil angka latitude & longitude dari jawaban JSON
             double lat = geoResponse.get(0).get("lat").asDouble();
             double lon = geoResponse.get(0).get("lon").asDouble();
 
             // 2. Ambil Data Polusi (Air Pollution API) - KODE LAMA (TETAP)
+            // Pakai koordinat tadi buat minta data polusi
             String pollutionUrl = apiUrl + "?lat=" + lat + "&lon=" + lon + "&appid=" + apiKey;
             JsonNode pollutionResponse = restTemplate.getForObject(pollutionUrl, JsonNode.class);
             
             JsonNode listData = pollutionResponse.get("list").get(0);
-            JsonNode components = listData.get("components");
+            JsonNode components = listData.get("components"); // Bongkar JSON polusi, ambil aqi, pm2.5, co
             JsonNode main = listData.get("main");
 
+            // Mulai masukkan ke wadah (Object AirQuality)
             AirQuality airQuality = new AirQuality();
             airQuality.setCityName(cityName);
             airQuality.setAqiIndex(main.get("aqi").asInt());
@@ -64,21 +68,23 @@ public class AirQualityServiceImpl implements AirQualityService {
             JsonNode weatherResponse = restTemplate.getForObject(weatherUrl, JsonNode.class);
 
             if (weatherResponse != null) {
+                // Masukkan suhu & ikon ke wadah (model) tadi
                 // Ambil suhu
                 double temp = weatherResponse.get("main").get("temp").asDouble();
                 airQuality.setTemperature(temp);
-
                 // Ambil icon cuaca (misal: "04d" = berawan)
                 String iconCode = weatherResponse.get("weather").get(0).get("icon").asText();
                 airQuality.setWeatherIcon(iconCode);
             }
             // ---------------------------------------------------------
 
+             // TAHAP 4: HITUNG STATUS & SIMPAN
             // 4. Logic Status AQI - SUDAH DIPINDAH KE MODEL (OOP / Refactoring)
             // Kita panggil method logika yang ada di dalam class AirQuality
+            // "Ini AQI-nya 5, berarti statusnya apa?" -> Kalkulasi otomatis
             airQuality.calculateStatus();
 
-            return repository.save(airQuality);
+            return repository.save(airQuality); // Simpan ke Gudang (Database) lewat Repository
 
         } catch (Exception e) {
             e.printStackTrace();
